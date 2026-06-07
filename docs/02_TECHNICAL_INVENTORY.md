@@ -8,7 +8,7 @@ operational commands.
 | Item | Value |
 | --- | --- |
 | Package name | `@optdyn/he-net` |
-| Version | `0.2.0` |
+| Version | `1.0.0` |
 | Runtime module type | CommonJS |
 | Main export | `src/index.js` |
 | CLI binaries | `he-net`, `he-net-mcp` |
