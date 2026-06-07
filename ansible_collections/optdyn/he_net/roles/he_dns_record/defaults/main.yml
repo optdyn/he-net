@@ -1,0 +1,6 @@
+---
+he_net_cli_path: he-net
+he_net_creds_path: ""
+he_net_record_zone: ""
+he_net_record_desired: []
+he_net_record_execute: false

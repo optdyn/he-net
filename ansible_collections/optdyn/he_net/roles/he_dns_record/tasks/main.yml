@@ -1,0 +1,11 @@
+---
+- name: Plan or apply HE.net DNS records
+  optdyn.he_net.he_net_record:
+    cli_path: "{{ he_net_cli_path }}"
+    creds_path: "{{ he_net_creds_path | default(omit) }}"
+    zone: "{{ he_net_record_zone }}"
+    desired: "{{ he_net_record_desired }}"
+    execute: "{{ he_net_record_execute }}"
+    confirm_zone: "{{ he_net_record_zone if he_net_record_execute else '' }}"
+    confirm_apply: "{{ 'APPLY_RECORDS' if he_net_record_execute else '' }}"
+  register: he_net_record_result

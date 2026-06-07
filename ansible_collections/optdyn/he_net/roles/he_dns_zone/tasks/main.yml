@@ -1,0 +1,8 @@
+---
+- name: Inspect HE.net zone state
+  optdyn.he_net.he_net_zone:
+    cli_path: "{{ he_net_cli_path }}"
+    creds_path: "{{ he_net_creds_path | default(omit) }}"
+    state: "{{ he_net_zone_state }}"
+    zone: "{{ he_net_zone_name | default(omit) }}"
+  register: he_net_zone_result

@@ -1,0 +1,30 @@
+{
+  "name": "@optdyn/he-net",
+  "version": "0.1.0",
+  "description": "Automation toolkit for HE.net Free DNS: CLI, Playwright adapter, Ansible collection, and MCP server.",
+  "main": "src/index.js",
+  "bin": {
+    "he-net": "bin/he-net.js",
+    "he-net-mcp": "bin/he-net-mcp.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check bin/he-net.js && node --check bin/he-net-mcp.js && find src -name '*.js' -print0 | xargs -0 -n1 node --check",
+    "validate": "npm run check && npm test"
+  },
+  "keywords": [
+    "dns",
+    "he.net",
+    "hurricane-electric",
+    "ansible",
+    "mcp",
+    "playwright"
+  ],
+  "author": "OptDyn",
+  "license": "Apache-2.0",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.60.0"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,19 @@
+---
+- name: Plan Google Workspace records in HE.net
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Plan records
+      optdyn.he_net.he_net_record:
+        zone: lnux.online
+        desired:
+          - owner: lnux.online.
+            ttl: 3600
+            class: IN
+            type: MX
+            rdata: 1 ASPMX.L.GOOGLE.com.
+            rdata_tokens: ["1", "ASPMX.L.GOOGLE.com."]
+            fields:
+              preference: "1"
+              exchange: ASPMX.L.GOOGLE.com.
+        execute: false

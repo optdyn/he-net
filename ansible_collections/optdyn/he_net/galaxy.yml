@@ -1,0 +1,16 @@
+namespace: optdyn
+name: he_net
+version: 0.1.0
+readme: README.md
+authors:
+  - OptDyn
+description: HE.net Free DNS automation modules and roles.
+license:
+  - Apache-2.0
+tags:
+  - dns
+  - he_net
+  - networking
+  - automation
+repository: https://github.com/optdyn/he-net
+issues: https://github.com/optdyn/he-net/issues
