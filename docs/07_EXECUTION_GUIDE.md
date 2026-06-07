@@ -51,6 +51,29 @@ Expected output:
 # node --test reports all tests passing.
 ```
 
+Run opt-in read-only live integration tests against domains in
+`./test-domains.txt`:
+
+```bash
+HE_NET_LIVE_READ_TESTS=1 npm test
+```
+
+> [!IMPORTANT]
+> The live integration test is read-only. Mutation integration tests are not run
+> automatically because DNS mutations require explicit concrete approval.
+
+Run guarded live mutation rollback tests against domains in
+`./test-domains.txt`:
+
+```bash
+HE_NET_LIVE_MUTATION_TESTS=1 \
+HE_NET_CONFIRM_LIVE_MUTATION=ROLLBACK_TEST_DOMAINS \
+npm test
+```
+
+The mutation test snapshots each configured zone, adds a temporary TXT record,
+and rolls the zone back to the original snapshot in a `finally` block.
+
 ## CLI Help
 
 ```bash
@@ -167,6 +190,57 @@ node bin/he-net.js he apply-records \
   --confirm-apply APPLY_RECORDS
 ```
 
+Successful mutation commands write local snapshots and operation logs under
+`.local/he-net-archives` unless `--archive-dir` is supplied.
+
+List snapshots:
+
+```bash
+node bin/he-net.js archive list --zone example.com
+```
+
+Show a snapshot:
+
+```bash
+node bin/he-net.js archive show \
+  --zone example.com \
+  --snapshot SNAPSHOT_ID
+```
+
+List operation history:
+
+```bash
+node bin/he-net.js archive operations --zone example.com
+```
+
+Show one operation:
+
+```bash
+node bin/he-net.js archive operation \
+  --zone example.com \
+  --operation OPERATION_ID
+```
+
+Plan rollback to a snapshot:
+
+```bash
+node bin/he-net.js he rollback-plan \
+  --zone example.com \
+  --snapshot SNAPSHOT_ID \
+  --report reports/example.com-rollback.md
+```
+
+Apply rollback:
+
+```bash
+node bin/he-net.js he rollback-records \
+  --zone example.com \
+  --snapshot SNAPSHOT_ID \
+  --execute \
+  --confirm-zone example.com \
+  --confirm-rollback ROLLBACK_RECORDS
+```
+
 ```bash
 node bin/he-net.js he convert-slave \
   --zone example.com \
@@ -225,4 +299,3 @@ Run Ansible module syntax checks when Ansible is installed:
 ansible-doc -t module optdyn.he_net.he_net_record
 ansible-doc -t module optdyn.he_net.he_net_zone
 ```
-

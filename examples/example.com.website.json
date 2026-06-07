@@ -1,8 +1,8 @@
 {
-  "origin": "lnux.online.",
+  "origin": "example.com.",
   "records": [
     {
-      "owner": "lnux.online.",
+      "owner": "example.com.",
       "ttl": 300,
       "class": "IN",
       "type": "A",
@@ -10,12 +10,13 @@
       "rdata_tokens": ["203.0.113.10"]
     },
     {
-      "owner": "www.lnux.online.",
+      "owner": "www.example.com.",
       "ttl": 300,
       "class": "IN",
       "type": "CNAME",
-      "rdata": "lnux.online.",
-      "rdata_tokens": ["lnux.online."]
+      "rdata": "example.com.",
+      "rdata_tokens": ["example.com."]
     }
   ]
 }
+

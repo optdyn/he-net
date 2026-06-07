@@ -5,6 +5,7 @@ __pycache__/
 .env
 *.log
 he-net-creds.txt
+test-domains.txt
 reports/*.html
 reports/*.json
 reports/*evidence*.json

@@ -20,11 +20,13 @@ Mitigation:
 * Use `plan-records` before every mutation.
 * Treat UI inspection output as an adapter result, not as source control.
 
-## Partial Mutation Coverage
+## Mutation And Rollback Coverage
 
-`he-net he apply-records` currently adds missing records only.
+`he-net he apply-records` currently adds missing records only. Rollback is the
+full reconcile path and can add records, delete extra records, and replace
+records with TTL differences by deleting and re-adding them.
 
-It does not currently:
+Normal apply does not currently:
 
 * delete extra records from the CLI,
 * update TTL values in place,
@@ -35,6 +37,10 @@ It does not currently:
 > [!WARNING]
 > Extra records and TTL differences appear in plans and reports, but an apply
 > run does not automatically remove or update them.
+
+Rollback is not transactional. If HE.net accepts some form submissions and then
+rejects a later one, the operation log and pre-rollback snapshot remain the
+source for recovery planning.
 
 ## Authoritative Verification Is Presence-Oriented
 
@@ -72,10 +78,11 @@ Rationale:
 
 ## Test Domain Restrictions
 
-`lnux.online` may be used for live testing only after explicit approval for a
-concrete operation.
+Live test domains come from local `./test-domains.txt` configuration. The file
+may also be a symlink to a private domain list.
 
-Do not run live mutation commands against this domain without that approval.
+Do not run live mutation commands against any configured test domain without a
+specific operator request and the normal confirmation gates.
 
 ## Credentials And Local Profiles
 
@@ -88,4 +95,3 @@ Recommended local paths:
 he-net-creds.txt
 .local/he-net-profile/
 ```
-

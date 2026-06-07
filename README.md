@@ -18,6 +18,16 @@ HE.net does not publish a general full CRUD DNS management API for Free DNS. Thi
 - Credentials are read from environment variables or ignored files and are never written to reports.
 - Reports are redacted before persistence.
 - Live DNS verification queries authoritative nameservers directly.
+- Mutation commands write local archive snapshots and operation history under
+  `.local/he-net-archives` by default.
+
+## Supported Record Types
+
+The CLI create path supports the record types published by HE.net Hosted DNS:
+`A`, `AAAA`, `AFSDB`, `ALIAS`, `CAA`, `CNAME`, `HINFO`, `LOC`, `MX`,
+`NAPTR`, `NS`, `PTR`, `RP`, `SPF`, `SRV`, `SSHFP`, and `TXT`.
+
+Unsupported record types are rejected before a live form submission.
 
 ## Credentials
 
@@ -53,6 +63,24 @@ Apply a record change:
 
 ```bash
 he-net he apply-records --zone example.com --desired records/example.com.desired.json --execute --confirm-zone example.com --confirm-apply APPLY_RECORDS
+```
+
+List archived snapshots:
+
+```bash
+he-net archive list --zone example.com
+```
+
+Plan rollback to a historical snapshot:
+
+```bash
+he-net he rollback-plan --zone example.com --snapshot SNAPSHOT_ID --report reports/example.com-rollback.md
+```
+
+Apply rollback:
+
+```bash
+he-net he rollback-records --zone example.com --snapshot SNAPSHOT_ID --execute --confirm-zone example.com --confirm-rollback ROLLBACK_RECORDS
 ```
 
 Verify authoritative answers:
@@ -97,6 +125,33 @@ Tools exposed:
 
 `apply_records` is intentionally gated and requires confirmation arguments.
 
-## Testing Domain
+## Test Domains
 
-The repository may use `lnux.online` as a test domain when explicitly requested. No live mutation is performed by tests.
+Live test domains are local operator configuration. Copy
+`test-domains.example.txt` to `./test-domains.txt`, or symlink
+`./test-domains.txt` to a private file with one domain name per line. Inspect it
+with:
+
+```bash
+he-net test-domains list
+```
+
+No live mutation is performed by automated tests.
+
+Run read-only live integration tests against configured test domains:
+
+```bash
+HE_NET_LIVE_READ_TESTS=1 npm test
+```
+
+Run guarded live mutation rollback tests against configured test domains:
+
+```bash
+HE_NET_LIVE_MUTATION_TESTS=1 \
+HE_NET_CONFIRM_LIVE_MUTATION=ROLLBACK_TEST_DOMAINS \
+npm test
+```
+
+The mutation rollback test snapshots each configured test domain, adds a
+temporary TXT record, and rolls the zone back to the original snapshot in a
+`finally` block.

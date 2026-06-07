@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs/promises');
+const { normalizeRecordType } = require('./record-types');
 
 const KNOWN_CLASSES = new Set(['IN', 'CH', 'HS']);
 const TYPE_FIELDS = {
@@ -152,7 +153,7 @@ function parseZoneText(text, options = {}) {
       index += 1;
     }
     if (ttl === null) throw new Error(`Line ${line}: no TTL found: ${recordText}`);
-    const type = String(tokens[index] || '').toUpperCase();
+    const type = normalizeRecordType(tokens[index]);
     const rdataTokens = tokens.slice(index + 1);
     if (!type || !rdataTokens.length) throw new Error(`Line ${line}: missing type or RDATA: ${recordText}`);
     const fields = TYPE_FIELDS[type]
@@ -170,7 +171,7 @@ function parseZoneText(text, options = {}) {
     };
   });
   return {
-    analysis: analyzeRecords(records),
+    analysis: analyzeRecords(records, options),
     header: logical.header,
     origin: options.origin || inferOrigin(records),
     records,
@@ -182,15 +183,16 @@ function inferOrigin(records) {
   return soa?.owner || '';
 }
 
-function analyzeRecords(records) {
+function analyzeRecords(records, options = {}) {
   const typeCounts = {};
   const owners = new Map();
   const staleNsReferences = [];
+  const staleNameservers = new Set((options.staleNameservers || []).map((name) => String(name).toLowerCase()));
   for (const record of records) {
     typeCounts[record.type] = (typeCounts[record.type] || 0) + 1;
     if (!owners.has(record.owner)) owners.set(record.owner, new Set());
     owners.get(record.owner).add(record.type);
-    if (record.type === 'NS' && ['ns0.optdyn.com.', 'ns1.optdyn.com.'].includes(String(record.rdata).toLowerCase())) {
+    if (record.type === 'NS' && staleNameservers.has(String(record.rdata).toLowerCase())) {
       staleNsReferences.push(record);
     }
   }

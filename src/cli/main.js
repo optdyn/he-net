@@ -2,7 +2,9 @@
 
 const fs = require('fs/promises');
 const path = require('path');
+const archive = require('../core/archive');
 const { compareRecords, HE_NAMESERVERS, verifyAuthoritative } = require('../core/dns');
+const { readTestDomains } = require('../core/domain-list');
 const { parseZoneFile, toZoneFile } = require('../core/zone-parser');
 const { HeNetClient } = require('../he/client');
 const presets = require('../workflows/presets');
@@ -20,8 +22,15 @@ function usage() {
   he-net he inspect-zone --zone example.com [--report report.md] [--json]
   he-net he plan-records --zone example.com --desired records.json [--report report.md]
   he-net he apply-records --zone example.com --desired records.json --execute --confirm-zone example.com --confirm-apply APPLY_RECORDS
+  he-net he rollback-plan --zone example.com --snapshot SNAPSHOT_ID [--report report.md]
+  he-net he rollback-records --zone example.com --snapshot SNAPSHOT_ID --execute --confirm-zone example.com --confirm-rollback ROLLBACK_RECORDS
   he-net he inspect-convert --zone example.com
-  he-net he convert-slave --zone example.com --execute --confirm-zone example.com --confirm-convert CONVERT`;
+  he-net he convert-slave --zone example.com --execute --confirm-zone example.com --confirm-convert CONVERT
+  he-net archive list --zone example.com
+  he-net archive show --zone example.com --snapshot SNAPSHOT_ID
+  he-net archive operations --zone example.com
+  he-net archive operation --zone example.com --operation OPERATION_ID
+  he-net test-domains list [--path test-domains.txt] [--json]`;
 }
 
 async function readRecords(file) {
@@ -32,6 +41,29 @@ async function readRecords(file) {
 async function writeJson(file, value) {
   await fs.mkdir(path.dirname(file), { recursive: true });
   await fs.writeFile(file, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+async function archiveSnapshot(zone, source, records, args, metadata = {}) {
+  return archive.createSnapshot(zone, source, records, metadata, { archiveDir: args.archiveDir });
+}
+
+async function writeRollbackReport(reportPath, zone, plan) {
+  await writeReport(reportPath, `HE.net Rollback Plan - ${zone}`, [
+    {
+      lines: [
+        `- Zone: ${zone}`,
+        `- Snapshot: ${plan.snapshot.id}`,
+        `- Snapshot captured: ${plan.snapshot.capturedAt}`,
+        `- Snapshot records: ${plan.snapshot.recordCount}`,
+        `- Add: ${plan.add.length}`,
+        `- Delete: ${plan.delete.length}`,
+        `- TTL replacements: ${plan.ttlReplacements.length}`,
+      ],
+    },
+    { title: 'Add', lines: plan.add.map((item) => `- ${item.key}`) },
+    { title: 'Delete', lines: plan.delete.map(recordLine) },
+    { title: 'TTL Replacements', lines: plan.ttlReplacements.map((item) => `- ${item.key}`) },
+  ]);
 }
 
 async function withClient(args, fn) {
@@ -162,12 +194,101 @@ async function commandHe(args) {
     const desired = await readRecords(required(args, 'desired'));
     return withClient(args, async (client) => {
       const plan = await client.planRecords(zone, desired);
+      const before = await archiveSnapshot(zone, 'pre-apply-records', plan.actual, args, {
+        command: 'he apply-records',
+        desiredCount: desired.length,
+      });
       const operations = [];
       for (const missing of plan.comparison.missing) {
         const result = await client.addRecord(plan.zoneId, missing.record);
         operations.push({ action: 'add', key: missing.key, result });
       }
-      console.log(JSON.stringify({ operations, zone }, null, 2));
+      const after = await client.inspectZone(zone);
+      const afterSnapshot = await archiveSnapshot(zone, 'post-apply-records', after.records, args, {
+        beforeSnapshotId: before.id,
+        command: 'he apply-records',
+      });
+      const operation = await archive.writeOperation(zone, 'apply-records', {
+        afterSnapshotId: afterSnapshot.id,
+        beforeSnapshotId: before.id,
+        desired,
+        operations,
+        planned: {
+          extras: plan.comparison.extras.length,
+          missing: plan.comparison.missing.length,
+          ttlDifferences: plan.comparison.ttlDifferences.length,
+        },
+      }, { archiveDir: args.archiveDir });
+      console.log(JSON.stringify({
+        afterSnapshotId: afterSnapshot.id,
+        beforeSnapshotId: before.id,
+        operationId: operation.id,
+        operations,
+        zone,
+      }, null, 2));
+    });
+  }
+  if (sub === 'rollback-plan') {
+    const zone = required(args, 'zone');
+    const snapshot = await archive.readSnapshot(zone, required(args, 'snapshot'), { archiveDir: args.archiveDir });
+    return withClient(args, async (client) => {
+      const inspected = await client.inspectZone(zone);
+      const plan = archive.rollbackPlan(snapshot, inspected.records);
+      if (args.json) console.log(JSON.stringify(plan, null, 2));
+      else console.log(JSON.stringify(archive.summarizeRollbackPlan(plan), null, 2));
+      await writeRollbackReport(args.report, zone, plan);
+      if (plan.add.length || plan.delete.length || plan.ttlReplacements.length) process.exitCode = 2;
+    });
+  }
+  if (sub === 'rollback-records') {
+    const zone = required(args, 'zone');
+    if (!args.execute) throw new Error('rollback-records is dry-run by default; use rollback-plan or pass --execute with confirmations.');
+    if (args.confirmZone !== zone || args.confirmRollback !== 'ROLLBACK_RECORDS') {
+      throw new Error(`Missing --confirm-zone ${zone} --confirm-rollback ROLLBACK_RECORDS`);
+    }
+    const snapshot = await archive.readSnapshot(zone, required(args, 'snapshot'), { archiveDir: args.archiveDir });
+    return withClient(args, async (client) => {
+      const inspected = await client.inspectZone(zone);
+      const before = await archiveSnapshot(zone, 'pre-rollback-records', inspected.records, args, {
+        command: 'he rollback-records',
+        targetSnapshotId: snapshot.id,
+      });
+      const plan = archive.rollbackPlan(snapshot, inspected.records);
+      const operations = [];
+      for (const record of plan.delete) {
+        const result = await client.deleteRecord(inspected.zoneId, record, { confirmDelete: 'DELETE_RECORD' });
+        operations.push({ action: 'delete', key: recordLine(record), result });
+      }
+      for (const replacement of plan.ttlReplacements) {
+        const deleted = await client.deleteRecord(inspected.zoneId, replacement.actual, { confirmDelete: 'DELETE_RECORD' });
+        operations.push({ action: 'delete-for-ttl-replacement', key: replacement.key, result: deleted });
+        const added = await client.addRecord(inspected.zoneId, replacement.desired);
+        operations.push({ action: 'add-for-ttl-replacement', key: replacement.key, result: added });
+      }
+      for (const item of plan.add) {
+        const result = await client.addRecord(inspected.zoneId, item.record);
+        operations.push({ action: 'add', key: item.key, result });
+      }
+      const after = await client.inspectZone(zone);
+      const afterSnapshot = await archiveSnapshot(zone, 'post-rollback-records', after.records, args, {
+        beforeSnapshotId: before.id,
+        command: 'he rollback-records',
+        targetSnapshotId: snapshot.id,
+      });
+      const operation = await archive.writeOperation(zone, 'rollback-records', {
+        afterSnapshotId: afterSnapshot.id,
+        beforeSnapshotId: before.id,
+        operations,
+        targetSnapshotId: snapshot.id,
+      }, { archiveDir: args.archiveDir });
+      console.log(JSON.stringify({
+        afterSnapshotId: afterSnapshot.id,
+        beforeSnapshotId: before.id,
+        operationId: operation.id,
+        operations,
+        targetSnapshotId: snapshot.id,
+        zone,
+      }, null, 2));
     });
   }
   if (sub === 'inspect-convert') {
@@ -181,14 +302,69 @@ async function commandHe(args) {
     const zone = required(args, 'zone');
     if (!args.execute) throw new Error('convert-slave requires --execute and confirmations.');
     return withClient(args, async (client) => {
+      const beforeConversion = await client.inspectSlaveConversion(zone);
+      const before = await archive.createSnapshot(zone, 'pre-convert-slave', [], {
+        command: 'he convert-slave',
+        conversion: beforeConversion,
+      }, { archiveDir: args.archiveDir });
       const result = await client.convertSlave(zone, {
         confirmConvert: args.confirmConvert,
         confirmZone: args.confirmZone,
       });
-      console.log(JSON.stringify(result, null, 2));
+      const operation = await archive.writeOperation(zone, 'convert-slave', {
+        beforeSnapshotId: before.id,
+        result,
+      }, { archiveDir: args.archiveDir });
+      console.log(JSON.stringify({ beforeSnapshotId: before.id, operationId: operation.id, result }, null, 2));
     });
   }
   throw new Error(usage());
+}
+
+async function commandArchive(args) {
+  const sub = args._[1];
+  const zone = required(args, 'zone');
+  if (sub === 'list') {
+    const snapshots = await archive.listSnapshots(zone, { archiveDir: args.archiveDir });
+    if (args.json) console.log(JSON.stringify(snapshots, null, 2));
+    else {
+      for (const snapshot of snapshots) {
+        console.log(`${snapshot.id} ${snapshot.capturedAt} records=${snapshot.recordCount} source=${snapshot.source}`);
+      }
+    }
+    return;
+  }
+  if (sub === 'show') {
+    const snapshot = await archive.readSnapshot(zone, required(args, 'snapshot'), { archiveDir: args.archiveDir });
+    console.log(JSON.stringify(snapshot, null, 2));
+    return;
+  }
+  if (sub === 'operations') {
+    const operations = await archive.listOperations(zone, { archiveDir: args.archiveDir });
+    if (args.json) console.log(JSON.stringify(operations, null, 2));
+    else {
+      for (const operation of operations) {
+        console.log(`${operation.id} ${operation.recordedAt} action=${operation.action} before=${operation.beforeSnapshotId || '-'}`);
+      }
+    }
+    return;
+  }
+  if (sub === 'operation') {
+    const operation = await archive.readOperation(zone, required(args, 'operation'), { archiveDir: args.archiveDir });
+    console.log(JSON.stringify(operation, null, 2));
+    return;
+  }
+  throw new Error(usage());
+}
+
+async function commandTestDomains(args) {
+  const sub = args._[1];
+  if (sub !== 'list') throw new Error(usage());
+  const domains = await readTestDomains({ path: args.path });
+  if (args.json) console.log(JSON.stringify(domains, null, 2));
+  else {
+    for (const domain of domains) console.log(domain);
+  }
 }
 
 async function main(argv) {
@@ -202,6 +378,8 @@ async function main(argv) {
   if (command === 'workflow') return commandWorkflow(args);
   if (command === 'dns') return commandDns(args);
   if (command === 'he') return commandHe(args);
+  if (command === 'archive') return commandArchive(args);
+  if (command === 'test-domains') return commandTestDomains(args);
   throw new Error(usage());
 }
 

@@ -5,9 +5,9 @@
   tasks:
     - name: Plan records
       optdyn.he_net.he_net_record:
-        zone: lnux.online
+        zone: example.com
         desired:
-          - owner: lnux.online.
+          - owner: example.com.
             ttl: 3600
             class: IN
             type: MX

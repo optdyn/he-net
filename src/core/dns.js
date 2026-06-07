@@ -2,11 +2,11 @@
 
 const { execFile } = require('child_process');
 const { promisify } = require('util');
+const { PRIORITY_RECORD_TYPES, normalizeRecordType } = require('./record-types');
 
 const execFileAsync = promisify(execFile);
 const HE_NAMESERVERS = ['ns1.he.net', 'ns2.he.net', 'ns3.he.net', 'ns4.he.net', 'ns5.he.net'];
 const PROVIDER_MANAGED_TYPES = new Set(['SOA']);
-const PRIORITY_TYPES = new Set(['MX', 'SRV']);
 
 function normalizeName(value) {
   const lowered = String(value || '').trim().toLowerCase();
@@ -47,7 +47,13 @@ function unquoteTxt(tokens) {
 }
 
 function recordParts(record) {
-  const type = String(record.type || '').toUpperCase();
+  const type = normalizeRecordType(record.type);
+  if (record.content !== undefined) {
+    return {
+      content: record.content,
+      priority: record.priority !== undefined && record.priority !== '' ? String(record.priority) : '-',
+    };
+  }
   const tokens = record.rdata_tokens || String(record.rdata || '').split(/\s+/).filter(Boolean);
   if (type === 'MX') {
     return {
@@ -72,8 +78,8 @@ function recordParts(record) {
 }
 
 function keyFromParts(name, type, priority, content) {
-  const upperType = String(type || '').toUpperCase();
-  const normalizedPriority = PRIORITY_TYPES.has(upperType) ? String(priority || '-') : '-';
+  const upperType = normalizeRecordType(type);
+  const normalizedPriority = PRIORITY_RECORD_TYPES.has(upperType) ? String(priority || '-') : '-';
   return `${normalizeName(name)}|${upperType}|${normalizedPriority}|${normalizeContent(content)}`;
 }
 
@@ -144,7 +150,7 @@ async function verifyAuthoritative(records, nameservers = HE_NAMESERVERS) {
   const seen = new Set();
   const queries = [];
   for (const record of records) {
-    const qtype = String(record.type || '').toUpperCase();
+    const qtype = normalizeRecordType(record.type);
     if (qtype === 'SOA') continue;
     const key = `${normalizeName(record.owner)}|${qtype}`;
     if (seen.has(key)) continue;
@@ -160,6 +166,7 @@ async function verifyAuthoritative(records, nameservers = HE_NAMESERVERS) {
 
 module.exports = {
   HE_NAMESERVERS,
+  PRIORITY_RECORD_TYPES,
   PROVIDER_MANAGED_TYPES,
   assertExactZone,
   compareRecords,

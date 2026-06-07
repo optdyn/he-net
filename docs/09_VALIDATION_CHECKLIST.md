@@ -13,6 +13,10 @@ documentation updates.
 | Python syntax | `python3 -m py_compile ansible_collections/optdyn/he_net/plugins/modules/he_net_record.py ansible_collections/optdyn/he_net/plugins/modules/he_net_zone.py` | Exit code `0`. |
 | CLI help | `node bin/he-net.js --help` | Usage text is printed. |
 | MCP tool list | `node bin/he-net-mcp.js` | JSON tool list is printed when interactive. |
+| Archive unit tests | `npm test` | Snapshot, operation, and rollback tests pass. |
+| Record type unit tests | `npm test` | Every HE.net-supported record type is covered. |
+| Read-only live integration | `HE_NET_LIVE_READ_TESTS=1 npm test` | Configured test domains can be inspected without mutation. |
+| Mutation rollback integration | `HE_NET_LIVE_MUTATION_TESTS=1 HE_NET_CONFIRM_LIVE_MUTATION=ROLLBACK_TEST_DOMAINS npm test` | Configured test domains return to their original snapshots after temporary TXT mutation. |
 
 ## Documentation Validation
 
@@ -144,10 +148,25 @@ node bin/he-net.js he apply-records \
   --confirm-apply APPLY_RECORDS
 ```
 
+Confirm archive history exists:
+
+```bash
+node bin/he-net.js archive list --zone example.com
+node bin/he-net.js archive operations --zone example.com
+```
+
+Plan rollback before applying it:
+
+```bash
+node bin/he-net.js he rollback-plan \
+  --zone example.com \
+  --snapshot SNAPSHOT_ID \
+  --report reports/example.com-rollback.md
+```
+
 Verify authoritative answers:
 
 ```bash
 node bin/he-net.js dns verify \
   --records records/example.com.json
 ```
-

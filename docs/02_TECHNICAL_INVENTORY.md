@@ -8,7 +8,7 @@ operational commands.
 | Item | Value |
 | --- | --- |
 | Package name | `@optdyn/he-net` |
-| Version | `0.1.0` |
+| Version | `0.2.0` |
 | Runtime module type | CommonJS |
 | Main export | `src/index.js` |
 | CLI binaries | `he-net`, `he-net-mcp` |
@@ -22,6 +22,7 @@ operational commands.
 
 ```js
 module.exports = {
+  archive: require('./core/archive'),
   dns: require('./core/dns'),
   zoneParser: require('./core/zone-parser'),
   workflows: require('./workflows/presets'),
@@ -43,6 +44,42 @@ module.exports = {
 | `compareRecords(desired, actual, options)` | `src/core/dns.js` | Return missing, extra, TTL, provider-managed, and per-record comparisons. |
 | `dig(server, owner, qtype, options)` | `src/core/dns.js` | Execute `dig` for a single authoritative query. |
 | `verifyAuthoritative(records, nameservers)` | `src/core/dns.js` | Query authoritative nameservers for each unique owner/type pair. |
+
+## Archive API
+
+| Function or constant | File | Purpose |
+| --- | --- | --- |
+| `DEFAULT_ARCHIVE_DIR` | `src/core/archive.js` | Default local archive root, `.local/he-net-archives`. |
+| `createSnapshot(zone, source, records, metadata, options)` | `src/core/archive.js` | Persist an immutable zone snapshot. |
+| `listSnapshots(zone, options)` | `src/core/archive.js` | List saved snapshots for a zone. |
+| `readSnapshot(zone, id, options)` | `src/core/archive.js` | Read one historical snapshot. |
+| `writeOperation(zone, action, payload, options)` | `src/core/archive.js` | Persist an operation log with snapshot references. |
+| `listOperations(zone, options)` | `src/core/archive.js` | List operation history for a zone. |
+| `readOperation(zone, id, options)` | `src/core/archive.js` | Read one operation history entry. |
+| `rollbackPlan(snapshot, actualRecords)` | `src/core/archive.js` | Build add, delete, and TTL replacement actions to restore a snapshot. |
+| `uiRecordToDesired(record)` | `src/core/archive.js` | Convert HE.net UI records into desired-state records. |
+
+## Record Type API
+
+| Function or constant | File | Purpose |
+| --- | --- | --- |
+| `HE_SUPPORTED_RECORD_TYPES` | `src/core/record-types.js` | HE.net Hosted DNS supported type set. |
+| `PRIORITY_RECORD_TYPES` | `src/core/record-types.js` | Types whose HE.net form uses priority separately from content. |
+| `normalizeRecordType(type)` | `src/core/record-types.js` | Normalize record type input to uppercase. |
+| `isHeSupportedRecordType(type)` | `src/core/record-types.js` | Check whether a type is supported by the HE.net create path. |
+| `assertHeSupportedRecordType(type)` | `src/core/record-types.js` | Reject unsupported types before live form submission. |
+
+Supported HE.net types are `A`, `AAAA`, `AFSDB`, `ALIAS`, `CAA`, `CNAME`,
+`HINFO`, `LOC`, `MX`, `NAPTR`, `NS`, `PTR`, `RP`, `SPF`, `SRV`, `SSHFP`, and
+`TXT`.
+
+## Test Domain Configuration API
+
+| Function or constant | File | Purpose |
+| --- | --- | --- |
+| `DEFAULT_TEST_DOMAINS_PATH` | `src/core/domain-list.js` | Default local test-domain list path, `./test-domains.txt`. |
+| `parseTestDomains(text)` | `src/core/domain-list.js` | Parse newline-delimited configured test domains. |
+| `readTestDomains(options)` | `src/core/domain-list.js` | Read configured test domains from a file. |
 
 ### Compare Records Schema
 
@@ -140,9 +177,16 @@ two-line username/password text.
 | `he-net he list-zones` | HE.net read | List active and slave zones. |
 | `he-net he inspect-zone` | HE.net read | Inspect one exact active zone. |
 | `he-net he plan-records` | HE.net read | Compare desired records with actual UI records. |
-| `he-net he apply-records` | HE.net mutation | Add missing records only after confirmations. |
+| `he-net he apply-records` | HE.net mutation | Archive before state, add missing records, archive after state, and log the operation. |
+| `he-net he rollback-plan` | HE.net read | Compare current records against an archived snapshot. |
+| `he-net he rollback-records` | HE.net mutation | Restore archived state with add, delete, and TTL replacement actions after confirmations. |
 | `he-net he inspect-convert` | HE.net read | Inspect slave conversion availability. |
-| `he-net he convert-slave` | HE.net mutation | Convert a slave zone after confirmations. |
+| `he-net he convert-slave` | HE.net mutation | Archive conversion state and convert a slave zone after confirmations. |
+| `he-net archive list` | Local read | List snapshots for a zone. |
+| `he-net archive show` | Local read | Show a snapshot JSON document. |
+| `he-net archive operations` | Local read | List operation history for a zone. |
+| `he-net archive operation` | Local read | Show one operation JSON document. |
+| `he-net test-domains list` | Local read | List domains from `./test-domains.txt` or a supplied path. |
 
 ## MCP Tools
 
@@ -167,4 +211,3 @@ two-line username/password text.
 | --- | --- |
 | `optdyn.he_net.he_net_record` | Plan or apply desired records by calling `he-net`. |
 | `optdyn.he_net.he_net_zone` | List, inspect, or inspect-convert zones by calling `he-net`. |
-

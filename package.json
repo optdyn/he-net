@@ -1,6 +1,6 @@
 {
   "name": "@optdyn/he-net",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Automation toolkit for HE.net Free DNS: CLI, Playwright adapter, Ansible collection, and MCP server.",
   "main": "src/index.js",
   "bin": {

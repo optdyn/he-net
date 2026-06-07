@@ -3,6 +3,7 @@
 const path = require('path');
 const { chromium } = require('playwright');
 const { assertExactZone, compareRecords, normalizeName } = require('../core/dns');
+const { assertHeSupportedRecordType } = require('../core/record-types');
 const { loginIfNeeded } = require('./auth');
 
 const DEFAULT_PROFILE = path.resolve(process.cwd(), '.local/he-net-profile');
@@ -193,7 +194,7 @@ class HeNetClient {
     if (!/^[0-9]+$/.test(String(zoneId))) throw new Error(`Unexpected zone id: ${zoneId}`);
     const ttl = String(record.ttl || '300');
     if (!TTL_BY_VALUE.has(ttl)) throw new Error(`TTL ${ttl} is not in the known HE.net dropdown values.`);
-    const type = String(record.type || '').toUpperCase();
+    const type = assertHeSupportedRecordType(record.type);
     const parts = require('../core/dns').recordParts(record);
     return this.page.evaluate(async ({ parts, record, ttl, type, zoneId }) => {
       const params = new URLSearchParams();

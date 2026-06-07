@@ -1,0 +1,6 @@
+# Copy this file to test-domains.txt, or symlink test-domains.txt to an
+# operator-owned private file. Use one domain per line.
+#
+# Domains listed here are examples only.
+example.com
+example.net
