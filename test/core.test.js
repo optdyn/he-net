@@ -21,6 +21,24 @@ test('normalizes TXT quoted chunks', () => {
   assert.equal(normalizeContent('"v=DMARC1; p=none"'), 'v=dmarc1; p=none');
 });
 
+test('compares TXT records using rdata when tokenization is lossy', () => {
+  const desired = [{
+    owner: 'example.com.',
+    type: 'TXT',
+    ttl: 300,
+    rdata: '"v=spf1 include:_spf.example.net -all"',
+    rdata_tokens: ['"v=spf1', 'include:_spf.example.net', '-all"'],
+  }];
+  const actual = [{
+    name: 'example.com',
+    type: 'TXT',
+    ttl: '300',
+    priority: '0',
+    content: '"v=spf1 include:_spf.example.net -all"',
+  }];
+  assert.equal(compareRecords(desired, actual).missing.length, 0);
+});
+
 test('record keys normalize non-priority records', () => {
   const key = recordKey({ owner: 'WWW.EXAMPLE.COM.', type: 'CNAME', ttl: 300, rdata: 'example.com.' });
   assert.equal(key, 'www.example.com|CNAME|-|example.com');

@@ -125,6 +125,37 @@ Tools exposed:
 
 `apply_records` is intentionally gated and requires confirmation arguments.
 
+### VS Code MCP Installer
+
+Install the local MCP server into the current Linux user's VS Code MCP
+configuration:
+
+```bash
+npm run install:vscode-mcp
+```
+
+Dry-run first:
+
+```bash
+npm run install:vscode-mcp -- --dry-run
+```
+
+Install to a workspace-local `.vscode/mcp.json` instead:
+
+```bash
+npm run install:vscode-mcp -- --scope workspace
+```
+
+Add a credentials file path to the VS Code MCP server environment:
+
+```bash
+npm run install:vscode-mcp -- --creds-path "$PWD/he-net-creds.txt"
+```
+
+The installer preserves existing MCP server entries, backs up an existing
+`mcp.json` to `mcp.json.bak`, installs npm dependencies, installs Playwright
+Chromium, and writes a VS Code `servers.heNetDns` stdio entry.
+
 ## Test Domains
 
 Live test domains are local operator configuration. Copy

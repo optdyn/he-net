@@ -72,7 +72,7 @@ function recordParts(record) {
     };
   }
   if (type === 'TXT') {
-    return { content: Array.isArray(record.rdata_tokens) ? unquoteTxt(record.rdata_tokens) : record.rdata, priority: '-' };
+    return { content: record.rdata !== undefined ? record.rdata : unquoteTxt(record.rdata_tokens || []), priority: '-' };
   }
   return { content: record.rdata, priority: '-' };
 }

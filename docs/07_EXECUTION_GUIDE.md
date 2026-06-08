@@ -283,6 +283,65 @@ When run interactively, expected output includes the tool list:
 }
 ```
 
+## VS Code MCP Installer
+
+VS Code stores MCP server configuration in `mcp.json` with a top-level
+`servers` object. On Linux, the user-level VS Code path is normally:
+
+```text
+~/.config/Code/User/mcp.json
+```
+
+Install this repository's MCP server for the current Linux user:
+
+```bash
+npm run install:vscode-mcp
+```
+
+Preview changes without installing dependencies or writing config:
+
+```bash
+npm run install:vscode-mcp -- --dry-run
+```
+
+Install to the repository workspace instead:
+
+```bash
+npm run install:vscode-mcp -- --scope workspace
+```
+
+Skip dependency steps when they are already installed:
+
+```bash
+npm run install:vscode-mcp -- \
+  --skip-npm-install \
+  --skip-playwright-install
+```
+
+Include an HE.net credential file path in the MCP server environment:
+
+```bash
+npm run install:vscode-mcp -- --creds-path "$PWD/he-net-creds.txt"
+```
+
+The installer writes this server shape, preserving other configured servers:
+
+```json
+{
+  "servers": {
+    "heNetDns": {
+      "type": "stdio",
+      "command": "/usr/bin/node",
+      "args": ["/path/to/he-net/bin/he-net-mcp.js"],
+      "cwd": "/path/to/he-net"
+    }
+  }
+}
+```
+
+If `mcp.json` already exists, the installer writes a `mcp.json.bak` backup
+before replacing it.
+
 ## Ansible Syntax Checks
 
 Run Python syntax checks:

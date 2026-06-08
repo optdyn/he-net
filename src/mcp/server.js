@@ -170,7 +170,8 @@ async function main() {
   if (process.stdin.isTTY) {
     process.stdout.write(`${JSON.stringify({ tools: TOOLS }, null, 2)}\n`);
   } else {
-    await fs.open('/dev/null', 'r').catch(() => null);
+    const handle = await fs.open('/dev/null', 'r').catch(() => null);
+    if (handle) await handle.close();
   }
 }
 

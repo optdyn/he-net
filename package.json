@@ -1,6 +1,6 @@
 {
   "name": "@optdyn/he-net",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Automation toolkit for HE.net Free DNS: CLI, Playwright adapter, Ansible collection, and MCP server.",
   "main": "src/index.js",
   "bin": {
@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check bin/he-net.js && node --check bin/he-net-mcp.js && find src -name '*.js' -print0 | xargs -0 -n1 node --check",
+    "check": "node --check bin/he-net.js && node --check bin/he-net-mcp.js && find src scripts -name '*.js' -print0 | xargs -0 -n1 node --check",
+    "install:vscode-mcp": "node scripts/install-vscode-mcp.js",
     "validate": "npm run check && npm test"
   },
   "keywords": [

@@ -77,7 +77,7 @@ function uiRecordToDesired(record) {
   const rdata = ['MX', 'SRV'].includes(type) && priority && priority !== '-'
     ? `${priority} ${content}`
     : content;
-  const rdataTokens = rdata.split(/\s+/).filter(Boolean);
+  const rdataTokens = type === 'TXT' ? [rdata] : rdata.split(/\s+/).filter(Boolean);
   const desired = {
     class: record.class || 'IN',
     owner: name,

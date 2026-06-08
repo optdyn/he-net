@@ -57,6 +57,19 @@ test('converts priority UI records into desired records', () => {
   assert.deepEqual(mx.rdata_tokens, ['1', 'ASPMX.L.GOOGLE.com.']);
 });
 
+test('converts quoted TXT UI records without splitting quoted content', () => {
+  const txt = archive.uiRecordToDesired({
+    content: '"v=spf1 include:_spf.example.net -all"',
+    name: 'example.com',
+    priority: '0',
+    ttl: '3600',
+    type: 'TXT',
+  });
+
+  assert.deepEqual(txt.rdata_tokens, ['"v=spf1 include:_spf.example.net -all"']);
+  assert.equal(txt.rdata, '"v=spf1 include:_spf.example.net -all"');
+});
+
 test('builds rollback plan from historical snapshot to current UI records', async (t) => {
   const archiveDir = await tempArchive();
   t.after(() => fs.rm(archiveDir, { force: true, recursive: true }));

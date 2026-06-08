@@ -8,13 +8,14 @@ operational commands.
 | Item | Value |
 | --- | --- |
 | Package name | `@optdyn/he-net` |
-| Version | `1.0.0` |
+| Version | `1.0.1` |
 | Runtime module type | CommonJS |
 | Main export | `src/index.js` |
 | CLI binaries | `he-net`, `he-net-mcp` |
 | Runtime dependency | `playwright` |
 | Test command | `npm test` |
 | Validation command | `npm run validate` |
+| VS Code MCP installer | `npm run install:vscode-mcp` |
 
 ## Public Node.js Exports
 
@@ -204,6 +205,17 @@ two-line username/password text.
 > [!NOTE]
 > The MCP server currently exposes read, parse, compare, workflow, and verify
 > tools. It does not expose a mutation tool.
+
+## Installer
+
+| Installer | File | Purpose |
+| --- | --- | --- |
+| `npm run install:vscode-mcp` | `scripts/install-vscode-mcp.js` | Install dependencies and write a VS Code `mcp.json` stdio server entry. |
+
+The installer targets the Linux user config path `~/.config/Code/User/mcp.json`
+by default. It can also write workspace config at `.vscode/mcp.json`, preserve
+existing server entries, create `mcp.json.bak`, and inject `HE_NET_CREDS` when
+`--creds-path` is supplied.
 
 ## Ansible Modules
 
