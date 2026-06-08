@@ -66,15 +66,20 @@ Known gaps:
   TTL dropdown values.
 * No automatic DKIM generator for Google Workspace.
 
-## MCP Mutation Not Exposed
+## MCP Mutation Scope
 
-The MCP server exposes parse, workflow, compare, inspect, plan, and verify
-tools. It does not expose apply or delete tools.
+The MCP server exposes guarded mutation tools for apply, delete, rollback, and
+slave conversion. These tools are dry-run by default and require exact zone
+confirmation plus operation-specific confirmation tokens before they mutate
+HE.net state.
 
-Rationale:
+Known gaps:
 
-* Agent-facing mutation requires a stronger confirmation model.
-* The CLI remains the mutation surface.
+* `apply_records` adds missing desired records only; it reports extras and TTL
+  differences but does not automatically reconcile them.
+* Direct `delete_records` requires exact record matches from the inspected zone
+  and does not perform fuzzy matching.
+* Browser automation still depends on HE.net markup and login behavior.
 
 ## Test Domain Restrictions
 

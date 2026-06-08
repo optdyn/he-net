@@ -199,12 +199,22 @@ two-line username/password text.
 | `workflow_records` | `workflow`, `zone` | Generate workflow records. |
 | `compare_records` | `desired`, `actual` | Compare supplied record sets locally. |
 | `verify_records` | `records` | Verify records through authoritative queries. |
+| `list_zones` | None | List active and slave HE.net zones. |
 | `inspect_zone` | `zone` | Inspect an exact HE.net active zone. |
 | `plan_records` | `zone`, `desired` | Plan changes for an exact HE.net active zone. |
+| `apply_records` | `zone`, `desired` | Add missing desired records after execution confirmations. |
+| `delete_records` | `zone`, `records` | Delete exact matching active-zone records after execution confirmations. |
+| `rollback_plan` | `zone`, `snapshot` | Plan rollback from an archived snapshot. |
+| `rollback_records` | `zone`, `snapshot` | Restore an archived snapshot after execution confirmations. |
+| `inspect_slave_conversion` | `zone` | Inspect slave-zone conversion availability. |
+| `convert_slave` | `zone` | Convert a slave zone after execution confirmations. |
+| `archive_list_snapshots` | `zone` | List archived snapshots. |
+| `archive_show_snapshot` | `zone`, `snapshot` | Show an archived snapshot. |
+| `archive_list_operations` | `zone` | List archived mutation operations. |
+| `archive_show_operation` | `zone`, `operation` | Show an archived mutation operation. |
 
-> [!NOTE]
-> The MCP server currently exposes read, parse, compare, workflow, and verify
-> tools. It does not expose a mutation tool.
+Mutation tools are dry-run by default and require exact `zone`, `execute=true`,
+and operation-specific confirmation tokens.
 
 ## Installer
 

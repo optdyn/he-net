@@ -283,6 +283,14 @@ When run interactively, expected output includes the tool list:
 }
 ```
 
+The MCP server exposes the same guarded HE.net operation flow as the CLI:
+`list_zones`, `inspect_zone`, `plan_records`, `apply_records`,
+`delete_records`, `rollback_plan`, `rollback_records`,
+`inspect_slave_conversion`, `convert_slave`, and archive inspection tools.
+Mutation tools are dry-run by default and require exact `zone`, `execute=true`,
+and the matching confirmation token: `APPLY_RECORDS`, `DELETE_RECORDS`,
+`ROLLBACK_RECORDS`, or `CONVERT`.
+
 ## VS Code MCP Installer
 
 VS Code stores MCP server configuration in `mcp.json` with a top-level

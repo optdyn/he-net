@@ -119,11 +119,26 @@ he-net-mcp
 Tools exposed:
 
 - `parse_zone`
-- `plan_records`
-- `inspect_zone`
+- `workflow_records`
+- `compare_records`
 - `verify_records`
+- `list_zones`
+- `inspect_zone`
+- `plan_records`
+- `apply_records`
+- `delete_records`
+- `rollback_plan`
+- `rollback_records`
+- `inspect_slave_conversion`
+- `convert_slave`
+- `archive_list_snapshots`
+- `archive_show_snapshot`
+- `archive_list_operations`
+- `archive_show_operation`
 
-`apply_records` is intentionally gated and requires confirmation arguments.
+Mutation tools are dry-run by default and require exact `zone`, `execute=true`,
+and operation-specific confirmation tokens such as `APPLY_RECORDS`,
+`DELETE_RECORDS`, `ROLLBACK_RECORDS`, or `CONVERT`.
 
 ### VS Code MCP Installer
 

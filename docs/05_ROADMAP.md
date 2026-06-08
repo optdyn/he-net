@@ -14,7 +14,7 @@ The roadmap is organized by implementation maturity and operational risk.
 | Guarded add-record apply path | `HeNetClient.addRecord()` and `he-net he apply-records` |
 | Slave conversion inspection and conversion path | `inspectSlaveConversion()` and `convertSlave()` |
 | Authoritative verification | `verifyAuthoritative()` |
-| MCP server for read/planning tools | `src/mcp/server.js` |
+| MCP server with guarded operation tools | `src/mcp/server.js` |
 | Ansible collection scaffold | `ansible_collections/optdyn/he_net` |
 
 ## Near-Term
@@ -39,11 +39,10 @@ The roadmap is organized by implementation maturity and operational risk.
 ## Longer-Term
 
 1.  Add browser-selector contract tests with saved redacted HE.net fixtures.
-2.  Add a stronger MCP mutation protocol with explicit confirmation tokens.
-3.  Add import workflows for preserved raw zone captures.
-4.  Add release automation for npm package, Ansible collection, and GitHub
+2.  Add import workflows for preserved raw zone captures.
+3.  Add release automation for npm package, Ansible collection, and GitHub
     release artifacts.
-5.  Add multi-zone planning with exact per-zone confirmation tokens.
+4.  Add multi-zone planning with exact per-zone confirmation tokens.
 
 ## Out Of Scope For Now
 
@@ -51,4 +50,3 @@ The roadmap is organized by implementation maturity and operational risk.
 * Mutations without local desired-state files.
 * Storing credentials or browser state in repository files.
 * Treating HE.net UI pages as canonical desired state.
-

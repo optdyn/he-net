@@ -15,7 +15,7 @@ gates, and separation between core DNS logic and HE.net web automation.
 | Record apply | Partial | Adds missing records only. |
 | Delete and update reconciliation | Incomplete | Extra records and TTL differences are reported but not reconciled by CLI apply. |
 | Ansible collection | Scaffolded and usable | Modules call the CLI and keep mutations confirmation-gated. |
-| MCP server | Read/planning usable | Mutation tools are intentionally absent. |
+| MCP server | Operational parity usable | Read, plan, apply, delete, rollback, conversion, and archive tools are exposed with confirmation gates. |
 | Test coverage | Basic | Core parser, comparison, TXT normalization, and workflows are covered. |
 | Documentation | Current | UDAS numbered documentation suite is present. |
 
@@ -50,14 +50,13 @@ UI behind an adapter.
 The limitations in [Known limitations](04_KNOWN_LIMITATIONS.md) are material:
 
 * `apply-records` is not a full reconciler.
-* TTL updates and extra-record deletion need additional guarded workflows.
+* `apply-records` still reports TTL updates and extras instead of treating apply as a full reconciler.
 * Verification checks answer presence, not full desired RDATA equality.
-* MCP mutation is intentionally unavailable.
 * Browser automation depends on HE.net markup and account login behavior.
 
 These limitations do not prevent read-only inspection, planning, record
-generation, or cautious addition of missing records. They do mean operators must
-continue to review plans and handle extra records manually.
+generation, cautious addition of missing records, guarded deletion, and rollback.
+They do mean operators must continue to review plans before executing mutations.
 
 ## Recommended Next Work
 
@@ -77,4 +76,3 @@ use. It is not yet a full DNS reconciler. The safe operating pattern is:
 capture or generate desired records -> inspect exact zone -> plan -> review ->
 apply confirmed additions only -> verify authoritative answers
 ```
-
