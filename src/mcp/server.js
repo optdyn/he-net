@@ -6,6 +6,22 @@ const { compareRecords, verifyAuthoritative } = require('../core/dns');
 const { HeNetClient } = require('../he/client');
 const presets = require('../workflows/presets');
 
+const DNS_RECORD_SCHEMA = {
+  type: 'object',
+  properties: {
+    content: { type: 'string' },
+    fields: { type: 'object' },
+    name: { type: 'string' },
+    owner: { type: 'string' },
+    priority: { type: ['string', 'number'] },
+    rdata: { type: 'string' },
+    rdata_tokens: { type: 'array', items: { type: 'string' } },
+    ttl: { type: ['string', 'number'] },
+    type: { type: 'string' },
+  },
+  required: ['type'],
+};
+
 const TOOLS = [
   {
     name: 'parse_zone',
@@ -35,8 +51,8 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        desired: { type: 'array' },
-        actual: { type: 'array' },
+        desired: { type: 'array', items: DNS_RECORD_SCHEMA },
+        actual: { type: 'array', items: DNS_RECORD_SCHEMA },
       },
       required: ['desired', 'actual'],
     },
@@ -47,7 +63,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        records: { type: 'array' },
+        records: { type: 'array', items: DNS_RECORD_SCHEMA },
         nameservers: { type: 'array', items: { type: 'string' } },
       },
       required: ['records'],
@@ -73,7 +89,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         zone: { type: 'string' },
-        desired: { type: 'array' },
+        desired: { type: 'array', items: DNS_RECORD_SCHEMA },
         profileDir: { type: 'string' },
         credsPath: { type: 'string' },
       },
@@ -175,4 +191,4 @@ async function main() {
   }
 }
 
-module.exports = { main };
+module.exports = { TOOLS, main };
